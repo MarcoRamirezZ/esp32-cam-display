@@ -1,23 +1,25 @@
 # esp32-cam-display
 
-Proyecto con una ESP32-CAM: captura video y lo transmite por WiFi, con el
-objetivo de mostrarlo en una pantalla LCD Nokia 5110 (monocromo, 84x48,
-controlador PCD8544).
+Proyecto con una ESP32-CAM: captura video y lo muestra en tiempo real en una
+pantalla LCD Nokia 5110 (monocromo, 84x48, controlador PCD8544), en blanco y
+negro con dithering Floyd-Steinberg. Standalone: no depende de WiFi ni de
+una PC, solo necesita alimentacion de 5V.
 
 ## Hardware
 
 - ESP32-CAM (AI-Thinker)
-- ESP32-CAM-MB (placa programadora USB-serial)
+- ESP32-CAM-MB (placa programadora USB-serial, solo se usa para subir el firmware)
 - LCD Nokia 5110 (PCD8544)
 
 ## Estado actual
 
-- [x] Streaming de video en vivo por WiFi (MJPEG), visible desde el navegador
-- [ ] Conexion de la LCD Nokia 5110
-- [ ] Conversion de frames a escala de grises / dithering para la LCD
-- [ ] Mostrar la imagen de la camara en la LCD
+- [x] Conexion de la LCD Nokia 5110
+- [x] Conversion de frames a escala de grises / dithering para la LCD
+- [x] Mostrar la imagen de la camara en la LCD en tiempo real
+- [x] Compensacion de rotacion (la LCD va montada a 90 grados respecto a la camara)
+- [x] Funciona standalone, sin WiFi ni PC
 
-## Wiring planeado (LCD Nokia 5110)
+## Wiring (LCD Nokia 5110)
 
 La mayoria de los GPIOs de la ESP32-CAM estan ocupados por la camara, asi
 que la LCD se conecta usando los pines que normalmente usaria la ranura
@@ -34,23 +36,27 @@ microSD (no se usa en este proyecto):
 | GND | GND |
 | BL | 3V3 |
 
+Si la LCD queda fisicamente montada rotada 90 grados respecto a la camara
+(borde largo vertical en vez de horizontal), cambia `LCD_ROTATE_CW` en
+`src/main.cpp` (1 o 0) hasta que la imagen se vea derecha.
+
 ## Setup
 
 1. Instalar [PlatformIO](https://platformio.org/).
-2. Copiar `include/secrets.h.example` a `include/secrets.h` y poner tu SSID
-   y password de WiFi (red de 2.4GHz).
-3. Conectar la ESP32-CAM por USB (via la ESP32-CAM-MB) y ajustar el puerto
-   en `platformio.ini` si no es `COM4`.
-4. Compilar y subir:
+2. Conectar la ESP32-CAM por USB (via la ESP32-CAM-MB, insertando el modulo
+   en su socket) y ajustar el puerto en `platformio.ini` si no es `COM4`.
+3. Compilar y subir:
 
    ```
    pio run -e esp32cam -t upload
    ```
 
-5. Abrir el monitor serial para ver la IP asignada:
+4. Sacar la ESP32-CAM de la MB y alimentarla de forma independiente por el
+   pin 5V (por ejemplo, con un cable USB cortado a un cargador o power
+   bank). La imagen de la camara deberia aparecer en la LCD en unos segundos.
 
-   ```
-   pio device monitor -p COM4 -b 115200
-   ```
+## Alimentacion independiente
 
-6. Abrir esa IP en el navegador (misma red WiFi) para ver el video en vivo.
+- Usar el pin **5V** y cualquier **GND** de la placa (no el pin 3V3).
+- Se recomienda una fuente de al menos 1A: la ESP32-CAM tiene picos de
+  consumo que pueden causar reinicios con fuentes debiles.
